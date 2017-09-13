@@ -6,52 +6,56 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-PixelLab *img = NULL, *curva = NULL;
+PixelLab *img = NULL, *copia = NULL;
 
 int wimg = 0, wcurva = 0, tom = 128;
+//GLfloat pnts[4][3] = {{ -4.0, -4.0, 0.0}, { -2.0, 4.0, 0.0}, {2.0, -4.0, 0.0}, {4.0, 4.0, 0.0}};
 
 static void display1(void)
 {
     glClearColor(1.0,1.0,1.0,1.0);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-/*
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    gluOrtho2D(0,100,0,100);
-
-    glBegin(GL_QUADS);
-        glColor3f(1.0,0.0,0.0);
-        glVertex2i(0, 0);
-        glVertex2i(0,100);
-        glColor3f(0.0,0.0,1.0);
-        glVertex2i(100, 0);
-        glVertex2i(100,100);
-    glEnd();
-
-
-*/
-    img->ViewImage();
+    copia->ViewImage();
     glutSwapBuffers();
 }
 
 static void display2(void)
 {
-    glClearColor(1.0,1.0,1.0,1.0);
+    int i;
+    glClearColor(0.0,0.0,0.0,0.0);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0,256,0,256);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluOrtho2D(0,100,0,100);
 
-    glBegin(GL_LINE_STRIP);
+        glBegin(GL_QUADS);
         glColor3f(0.0,0.0,0.0);
+        glVertex2i(256, 256);
+        glVertex2i(0,256);
+        glColor3f(1.0,1.0,1.0);
         glVertex2i(0, 0);
-        glVertex2i(20,40);
-        glVertex2i(60, 30);
-        glVertex2i(100,100);
+        glVertex2i(256,0);
     glEnd();
-    glutSwapBuffers();
+    /*
 
+    glColor3f(1.0, 1.0, 1.0);
+    glBegin(GL_LINE_STRIP);
+      for (i = 0; i <= 30; i++)
+         glEvalCoord1f((GLfloat) i/30.0);
+    glEnd();
+    glPointSize(5.0);
+    glColor3f(1.0, 1.0, 0.0);
+    glBegin(GL_POINTS);
+      for (i = 0; i < 4; i++)
+         glVertex3fv(&pnts[i][0]);
+    glEnd();
+    glFlush();
+    */
+    glutSwapBuffers();
 }
 
 void modificarImg()
@@ -72,7 +76,7 @@ void modificarImg()
             {
                 valorPixel = 0;
             }
-            img->SetGrayValue(i,j, (uByte)valorPixel);
+            copia->SetGrayValue(i,j, (uByte)valorPixel);
         }
     }
     glutPostWindowRedisplay(wimg);
@@ -86,9 +90,9 @@ void mouse(int button, int state, int x, int y)
         if(state == GLUT_DOWN)
         {
             tom = y;
-            modificarImg();
         }
     }
+    modificarImg();
 }
 
 void motion(int x, int y)
@@ -97,31 +101,46 @@ void motion(int x, int y)
     modificarImg();
 }
 
+/*void reshape(int w, int h)
+{
+   glViewport(0, 0, (GLsizei) w, (GLsizei) h);
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   if (w <= h)
+      glOrtho(-5.0, 5.0, -5.0*(GLfloat)h/(GLfloat)w,
+               5.0*(GLfloat)h/(GLfloat)w, -5.0, 5.0);
+   else
+      glOrtho(-5.0*(GLfloat)w/(GLfloat)h,
+               5.0*(GLfloat)w/(GLfloat)h, -5.0, 5.0, -5.0, 5.0);
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+}*/
+
 int main(int argc, char *argv[])
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
 
     img = new PixelLab();
-    curva = new PixelLab();
+    copia = new PixelLab();
     img->Read("../figs/woman.png");
+    copia->Copy(img);
 
     wimg = glutCreateWindow("Image Window");
     wcurva = glutCreateWindow("Curve Window");
 
     glutSetWindow(wimg);        // Muda a janela atual para "wimg" (todas as callbacks serão utilizadas nessa janela)
-    glutInitWindowSize(600,600);
-    glutInitWindowPosition(0,0);
+    glutPositionWindow(10,50);
     glutDisplayFunc(display1);
+    glutReshapeWindow(img->GetWidth(), img->GetHeight());
 
     glutSetWindow(wcurva);      // Muda a janela atual para "wcurva" (todas as callbacks serão utilizadas nessa janela)
-    glutInitWindowSize(600,600);
-    glutInitWindowPosition(650,0);
+    glutPositionWindow(600,50);
     glutReshapeWindow(256,256);
-    //glutSolidCube(1.0);
     glutMouseFunc(mouse);
     glutMotionFunc(motion);
     glutDisplayFunc(display2);
+    //glutReshapeFunc(reshape);
 
     glutMainLoop();
 
